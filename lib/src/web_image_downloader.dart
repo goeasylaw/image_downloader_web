@@ -55,7 +55,7 @@ class WebImageDownloader {
 
     final img = html.ImageElement();
 
-    img.src = "data:image/jpeg;base64,$base64";
+    img.src = "data:image/jpe;base64,$base64";
 
     final html.ElementStream<html.Event> loadStream = img.onLoad;
 
@@ -64,6 +64,45 @@ class WebImageDownloader {
       final dataUrl = canvas.toDataUrl("image/jpeg", imageQuality);
       final html.AnchorElement anchorElement =
           html.AnchorElement(href: dataUrl);
+      anchorElement.download = name ?? dataUrl;
+      anchorElement.click();
+    });
+  }
+
+  /// Download image from uInt8List to user device
+  Future<void> downloadPngImageFromUInt8List({
+    required Uint8List uInt8List,
+    String? name,
+  }) async {
+    final image = await decodeImageFromList(uInt8List);
+
+    final html.CanvasElement canvas = html.CanvasElement(
+      height: image.height,
+      width: image.width,
+    );
+
+    final ctx = canvas.context2D;
+
+    final List<String> binaryString = [];
+
+    for (final imageCharCode in uInt8List) {
+      final charCodeString = String.fromCharCode(imageCharCode);
+      binaryString.add(charCodeString);
+    }
+    final data = binaryString.join();
+
+    final base64 = html.window.btoa(data);
+
+    final img = html.ImageElement();
+
+    img.src = "data:image/png;base64,$base64";
+
+    final html.ElementStream<html.Event> loadStream = img.onLoad;
+
+    loadStream.listen((event) {
+      ctx.drawImage(img, 0, 0);
+      final dataUrl = canvas.toDataUrl("image/png");
+      final html.AnchorElement anchorElement = html.AnchorElement(href: dataUrl);
       anchorElement.download = name ?? dataUrl;
       anchorElement.click();
     });
